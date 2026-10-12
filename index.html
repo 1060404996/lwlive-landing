@@ -734,12 +734,17 @@ body{padding-bottom:66px}
 (function(){
   "use strict";
 
-  /* ============ 下载地址配置（中转链接，真实地址不出现在页面） ============
+  /* ============ 下载地址配置（base64 编码隐藏，源码中看不到任何下载地址明文） ============
      更新方式：只需在 Cloudflare 页面规则里改 /go/ios、/go/android 的目标 URL，
      落地页这里永远不用动。
+     如需改这里的值：python3 -c "import base64; print(base64.b64encode('链接'.encode()).decode())"
   ===================================================================== */
-  var DL_IOS = "https://img.yjtv.top/go/ios";
-  var DL_AND = "https://img.yjtv.top/go/android";
+  var DL_IOS = "aHR0cHM6Ly9pbWcueWp0di50b3AvZ28vaW9z";
+  var DL_AND = "aHR0cHM6Ly9pbWcueWp0di50b3AvZ28vYW5kcm9pZA==";
+
+  function dlDecode(s){ try { return s ? atob(s) : ""; } catch(e){ return ""; } }
+  DL_IOS = dlDecode(DL_IOS);
+  DL_AND = dlDecode(DL_AND);
 
   if (DL_IOS){ document.querySelectorAll(".dl-btn.ios").forEach(function(a){ a.href = DL_IOS; }); }
   if (DL_AND){ document.querySelectorAll(".dl-btn.android").forEach(function(a){ a.href = DL_AND; }); }
