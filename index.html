@@ -734,14 +734,18 @@ body{padding-bottom:66px}
 (function(){
   "use strict";
 
-  /* ============ 下载地址配置（发布前替换成你的真实链接即可） ============
-     1) 把下面两个引号里填上你的下载地址；
-     2) 什么都不填时，按钮会停留在页面下载区域（不会跳转到错误链接）。
-     iOS 示例： https://apps.apple.com/cn/app/idxxxxxxxx
-     Android 示例： https://your-domain.com/LwLive.apk 或网盘直链
+  /* ============ 下载地址配置（已编码隐藏，源码中看不到真实链接） ============
+     更新方式：把新链接 base64 编码后填入下方，运行时自动解码。
+     示例（python3）：
+       import base64; print(base64.b64encode("你的链接".encode()).decode())
+     留空则不绑定（按钮停留在页面下载区域）。
   ===================================================================== */
-  var DL_IOS = "https://img.yjtv.top/file/软件/1791802324132_livehub24.ipa";
-  var DL_AND = "https://img.yjtv.top/file/软件/1791808739350_app-release24.apk";
+  var DL_IOS = "aHR0cHM6Ly9pbWcueWp0di50b3AvZmlsZS/ova/ku7YvMTc5MTgwMjMyNDEzMl9saXZlaHViMjQuaXBh";
+  var DL_AND = "aHR0cHM6Ly9pbWcueWp0di50b3AvZmlsZS/ova/ku7YvMTc5MTgwODczOTM1MF9hcHAtcmVsZWFzZTI0LmFwaw==";
+
+  function dlDecode(s){ try { return s ? atob(s) : ""; } catch(e){ return ""; } }
+  DL_IOS = dlDecode(DL_IOS);
+  DL_AND = dlDecode(DL_AND);
 
   if (DL_IOS){ document.querySelectorAll(".dl-btn.ios").forEach(function(a){ a.href = DL_IOS; }); }
   if (DL_AND){ document.querySelectorAll(".dl-btn.android").forEach(function(a){ a.href = DL_AND; }); }
