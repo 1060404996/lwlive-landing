@@ -761,8 +761,8 @@ body{padding-bottom:0}
      落地页这里永远不用动。
      如需改这里的值：python3 -c "import base64; print(base64.b64encode('链接'.encode()).decode())"
   ===================================================================== */
-  var DL_IOS = "aHR0cHM6Ly9pbWcueWp0di50b3AvZ28vaW9z";
-  var DL_AND = "aHR0cHM6Ly9pbWcueWp0di50b3AvZ28vYW5kcm9pZA==";
+  var DL_IOS = "aHR0cHM6Ly9tZWV0d2wuY2xvdWRucy5vcmcvZ28vaW9z";
+  var DL_AND = "aHR0cHM6Ly9tZWV0d2wuY2xvdWRucy5vcmcvZ28vYW5kcm9pZA==";
 
   function dlDecode(s){ try { return s ? atob(s) : ""; } catch(e){ return ""; } }
   DL_IOS = dlDecode(DL_IOS);
@@ -774,10 +774,9 @@ body{padding-bottom:0}
   /* ---------- 更新时间标签（自动读取各自文件的上传时间，无需手动改） ---------- */
   var UPDATED = "2026-10-12"; /* 兜底日期：仅当自动读取失败时显示 */
 
-  /* 真实文件链接（base64 编码，仅供读取上传时间用，不出现在页面）
-     换包时记得同步更新：把新直链发给 AI 重新编码即可 */
-  var TS_IOS = "aHR0cHM6Ly9pbWcueWp0di50b3AvZmlsZS8xNzkxODE4ODczODk2X2xpdmVodWItMC41LjE4XzI0LmlwYQ==";
-  var TS_AND = "aHR0cHM6Ly9pbWcueWp0di50b3AvZmlsZS/ova/ku7YvMTc5MTgyMDMxMjY2NF9saXZlaHViLTAuNTE4XzI0LmFwaw==";
+  /* 文件名（base64 编码，仅用于解析上传时间戳；换包时同步更新为新文件名即可） */
+  var TS_IOS = "MTc5MTgxODg3Mzg5Nl9saXZlaHViLTAuNS4xOF8yNC5pcGE=";
+  var TS_AND = "MTc5MTgyMDMxMjY2NF9saXZlaHViLTAuNTE4XzI0LmFwaw==";
 
   function fmtDate(ts){
     var d = new Date(ts), p = function(n){ return (n<10?"0":"")+n; };
@@ -807,7 +806,7 @@ body{padding-bottom:0}
     list.forEach(function(pair){
       try{
         var u = dlDecode(pair[1]);
-        var m = u.match(/\/(\d{13})[^\/]*$/);
+        var m = u.match(/^(\d{13})/);
         if (m){
           var ts = parseInt(m[1], 10);
           if (ts > 0) applyTime(pair[0], ts);
