@@ -107,7 +107,9 @@ body{padding-bottom:0}
 }
 .update-tag b{font-weight:600;color:var(--ink);font-family:'Outfit','Noto Sans SC',sans-serif;letter-spacing:.04em}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.dl-banner .update-tag{margin:16px auto 0;background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.08)}
+.dl-cell{display:flex;flex-direction:column;align-items:center}
+.dl-cell .update-tag{margin-top:10px}
+.dl-banner .dl-cell .update-tag{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.08)}
 .trust span{display:inline-flex;align-items:center;gap:7px}
 .trust .ic{width:14px;height:14px}
 
@@ -400,6 +402,7 @@ body{padding-bottom:0}
 }
 @media (max-width:420px){
   .dl-btn{width:100%;justify-content:center}
+  .dl-cell{width:100%}
 }
 </style>
 </head>
@@ -785,14 +788,18 @@ body{padding-bottom:0}
       t.querySelector("b").textContent = fmtDate(ts);
     });
   }
-  document.querySelectorAll(".dl-row").forEach(function(row){
-    var isIos = !!row.querySelector(".dl-btn.ios");
+  document.querySelectorAll(".dl-btn").forEach(function(btn){
+    var isIos = btn.classList.contains("ios");
     var key = isIos ? "ios" : "android";
+    var cell = document.createElement("div");
+    cell.className = "dl-cell";
+    btn.parentNode.insertBefore(cell, btn);
+    cell.appendChild(btn);
     var tag = document.createElement("p");
     tag.className = "update-tag";
     tag.setAttribute("data-key", key);
     tag.innerHTML = '<span class="up-dot"></span>更新于 <b>' + UPDATED + '</b>';
-    row.insertAdjacentElement("afterend", tag);
+    cell.appendChild(tag);
   });
   (function autoFetch(){
     /* 直接从文件名开头的 13 位时间戳读取上传时间（图床自动命名，换包自动更新，无需任何网络请求） */
