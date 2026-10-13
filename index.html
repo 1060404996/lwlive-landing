@@ -801,12 +801,11 @@ body{padding-bottom:0}
     cell.appendChild(tag);
   });
   (function autoFetch(){
-    /* 接入后台 config.json（api.yjtv.top/data/config.json）：
-       - 按钮地址从后台 ios/android.downloadUrl 自动读取（后台改地址 → 落地页自动变）
-       - iOS 时间：HEAD 下载地址 → 文件 last-modified（自动）
-       - 安卓时间：后台配置文件的 last-modified（后台保存时刻，自动）
-       - 后台读取失败时：退回 HEAD + 文件名时间戳（TS_IOS / TS_AND） */
-    var CFG = "https://api.yjtv.top/data/config.json";
+    /* 通过 img.yjtv.top 的 Worker 中转读取后台配置（后台地址不出现）：
+       /latest/ios、/latest/android → { url, ts, version }
+       - url：后台配置的最新下载地址（后台改了 → 落地页自动变）
+       - ts ：文件真实上传时间（Worker 已读好，iOS/安卓都自动）
+       失败时兜底：HEAD 响应头 + 文件名时间戳（TS_IOS / TS_AND） */
     function tsFromHeader(r){
       var ts = 0;
       var lm = r.headers.get("last-modified");
@@ -827,56 +826,33 @@ body{padding-bottom:0}
         }
       }catch(e){}
     }
-    function headTs(url, key, fb){
+    function legacy(key, dlUrl){
       try{
-        fetch(url, {method:"HEAD", mode:"cors", cache:"no-store"})
+        fetch(dlUrl, {method:"HEAD", mode:"cors", cache:"no-store"})
           .then(function(r){
             var ts = tsFromHeader(r);
             if (ts > 0) applyTime(key, ts);
-            else if (fb) applyTime(key, fb);
+            else fallback(key, key === "ios" ? TS_IOS : TS_AND);
           })
-          .catch(function(){ if (fb) applyTime(key, fb); });
-      }catch(e){ if (fb) applyTime(key, fb); }
+          .catch(function(){ fallback(key, key === "ios" ? TS_IOS : TS_AND); });
+      }catch(e){ fallback(key, key === "ios" ? TS_IOS : TS_AND); }
     }
-    function legacy(){
-      var list = [["ios", DL_IOS, TS_IOS], ["android", DL_AND, TS_AND]];
-      list.forEach(function(pair){
-        var key = pair[0], dlEnc = pair[1], tsEnc = pair[2];
-        try{
-          fetch(dlDecode(dlEnc), {method:"HEAD", mode:"cors", cache:"no-store"})
-            .then(function(r){
-              var ts = tsFromHeader(r);
-              if (ts > 0) applyTime(key, ts);
-              else fallback(key, tsEnc);
-            })
-            .catch(function(){ fallback(key, tsEnc); });
-        }catch(e){ fallback(key, tsEnc); }
-      });
+    function loadLatest(plat, key, cur){
+      try{
+        fetch("https://img.yjtv.top/latest/" + plat, {method:"GET", mode:"cors", cache:"no-store"})
+          .then(function(r){ return r.json(); })
+          .then(function(o){
+            if (o && o.url && o.url !== cur){
+              document.querySelectorAll(".dl-btn." + key).forEach(function(a){ a.href = o.url; });
+            }
+            if (o && o.ts && o.ts > 0) applyTime(key, o.ts);
+            else legacy(key, cur);
+          })
+          .catch(function(){ legacy(key, cur); });
+      }catch(e){ legacy(key, cur); }
     }
-    try{
-      fetch(CFG, {method:"GET", mode:"cors", cache:"no-store"})
-        .then(function(r){
-          var cfgTs = 0;
-          var lm = r.headers.get("last-modified");
-          if (lm){ var t = Date.parse(lm); if (!isNaN(t)) cfgTs = t; }
-          return r.json().then(function(j){ return {j:j, cfgTs:cfgTs}; });
-        })
-        .then(function(o){
-          var j = o.j, cfgTs = o.cfgTs;
-          var iosUrl = (j && j.ios && j.ios.downloadUrl) || DL_IOS;
-          var andUrl = (j && j.android && j.android.downloadUrl) || DL_AND;
-          if (iosUrl && j && j.ios && j.ios.downloadUrl){
-            document.querySelectorAll(".dl-btn.ios").forEach(function(a){ a.href = iosUrl; });
-          }
-          if (andUrl && j && j.android && j.android.downloadUrl){
-            document.querySelectorAll(".dl-btn.android").forEach(function(a){ a.href = andUrl; });
-          }
-          headTs(iosUrl, "ios", 0);
-          if (cfgTs > 0) applyTime("android", cfgTs);
-          else headTs(andUrl, "android", 0);
-        })
-        .catch(function(){ legacy(); });
-    }catch(e){ legacy(); }
+    loadLatest("ios", "ios", DL_IOS);
+    loadLatest("android", "android", DL_AND);
   })();
 
   /* ---------- Theme switching ---------- */
