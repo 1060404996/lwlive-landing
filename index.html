@@ -62,10 +62,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   box-shadow:0 4px 16px rgba(228,177,95,.35);
 }
 .switcher button:not([aria-selected="true"]):hover{color:#fff;background:rgba(255,255,255,.08)}
-body{padding-bottom:66px}
+body{padding-bottom:0}
 
 /* ---------- Shared structure ---------- */
-.site{display:none}
+.site{display:none;padding-bottom:72px}
 .site.active{display:block}
 
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;transition:background .3s,border-color .3s,box-shadow .3s}
@@ -743,7 +743,7 @@ body{padding-bottom:66px}
 
 <!-- Theme switcher -->
 <div class="switcher" role="tablist" aria-label="切换设计版本">
-  <span class="switcher-label">版本</span>
+  <span class="switcher-label" hidden>版本</span>
   <button role="tab" aria-selected="true" data-theme="v1">黑金影厅</button>
   <button role="tab" aria-selected="false" data-theme="v2">霓虹现场</button>
   <button role="tab" aria-selected="false" data-theme="v3">晨雾清新</button>
@@ -773,7 +773,7 @@ body{padding-bottom:66px}
 
   function fmtDate(ts){
     var d = new Date(ts), p = function(n){ return (n<10?"0":"")+n; };
-    return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate());
+    return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
   function applyTime(key, ts){
     document.querySelectorAll(".update-tag[data-key=\""+key+"\"]").forEach(function(t){
