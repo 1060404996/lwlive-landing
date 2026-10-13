@@ -768,16 +768,40 @@ body{padding-bottom:66px}
   if (DL_IOS){ document.querySelectorAll(".dl-btn.ios").forEach(function(a){ a.href = DL_IOS; }); }
   if (DL_AND){ document.querySelectorAll(".dl-btn.android").forEach(function(a){ a.href = DL_AND; }); }
 
-  /* ---------- 更新时间标签（每次换包后改成最新上传日期） ---------- */
-  var UPDATED = "2026-10-12";
-  if (UPDATED){
-    document.querySelectorAll(".dl-row").forEach(function(row){
-      var tag = document.createElement("p");
-      tag.className = "update-tag";
-      tag.innerHTML = '<span class="up-dot"></span>更新于 <b>' + UPDATED + '</b>';
-      row.insertAdjacentElement("afterend", tag);
+  /* ---------- 更新时间标签（自动读取图床文件上传时间，无需手动改） ---------- */
+  var UPDATED = "2026-10-12"; /* 兜底日期：仅当自动读取失败时显示 */
+
+  function fmtDate(ts){
+    var d = new Date(ts), p = function(n){ return (n<10?"0":"")+n; };
+    return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate());
+  }
+  function applyTime(key, ts){
+    document.querySelectorAll(".update-tag[data-key=\""+key+"\"]").forEach(function(t){
+      t.querySelector("b").textContent = fmtDate(ts);
     });
   }
+  document.querySelectorAll(".dl-row").forEach(function(row){
+    var isIos = !!row.querySelector(".dl-btn.ios");
+    var key = isIos ? "ios" : "android";
+    var tag = document.createElement("p");
+    tag.className = "update-tag";
+    tag.setAttribute("data-key", key);
+    tag.innerHTML = '<span class="up-dot"></span>更新于 <b>' + UPDATED + '</b>';
+    row.insertAdjacentElement("afterend", tag);
+  });
+  (function autoFetch(){
+    var list = [["ios", DL_IOS], ["android", DL_AND]];
+    list.forEach(function(pair){
+      try{
+        fetch(pair[1], {method:"HEAD", mode:"cors", redirect:"follow"})
+          .then(function(r){
+            var et = r.headers.get("etag") || "";
+            var ts = parseInt(et.replace(/\D/g,"").slice(0,13), 10);
+            if (ts > 0) applyTime(pair[0], ts);
+          }).catch(function(){});
+      }catch(e){}
+    });
+  })();
 
   /* ---------- Theme switching ---------- */
   var sites = document.querySelectorAll(".site");
