@@ -801,10 +801,10 @@ body{padding-bottom:0}
     cell.appendChild(tag);
   });
   (function autoFetch(){
-    /* 通过 img.yjtv.top 的 Worker 中转读取后台配置（后台地址不出现）：
+    /* 通过 img.yjtv.top 的 Worker 中转读取后台配置（配置文件地址不出现）：
        /latest/ios、/latest/android → { url, ts, version }
-       - url：后台配置的最新下载地址（后台改了 → 落地页自动变）
-       - ts ：文件真实上传时间（Worker 已读好，iOS/安卓都自动）
+       - url：后台配置的最新下载地址（后台界面改了 → 落地页自动变）
+       - ts ：文件真实上传时间（Worker 已读好）
        失败时兜底：HEAD 响应头 + 文件名时间戳（TS_IOS / TS_AND） */
     function tsFromHeader(r){
       var ts = 0;
