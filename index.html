@@ -795,15 +795,16 @@ body{padding-bottom:0}
     row.insertAdjacentElement("afterend", tag);
   });
   (function autoFetch(){
+    /* 直接从文件名开头的 13 位时间戳读取上传时间（图床自动命名，换包自动更新，无需任何网络请求） */
     var list = [["ios", TS_IOS], ["android", TS_AND]];
     list.forEach(function(pair){
       try{
-        fetch(dlDecode(pair[1]), {method:"HEAD", mode:"cors"})
-          .then(function(r){
-            var et = r.headers.get("etag") || "";
-            var ts = parseInt(et.replace(/\D/g,"").slice(0,13), 10);
-            if (ts > 0) applyTime(pair[0], ts);
-          }).catch(function(){});
+        var u = dlDecode(pair[1]);
+        var m = u.match(/\/(\d{13})[^\/]*$/);
+        if (m){
+          var ts = parseInt(m[1], 10);
+          if (ts > 0) applyTime(pair[0], ts);
+        }
       }catch(e){}
     });
   })();
