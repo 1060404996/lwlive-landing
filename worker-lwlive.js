@@ -6,6 +6,7 @@
    - 数据源：后台 config.json（iOS/安卓 downloadUrl + 最新版本）
 */
 const UPSTREAM = "https://api.yjtv.top/data/config.json";
+const UPSTREAM_LOG = "https://api.yjtv.top/data/changelog.json";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +25,27 @@ export default {
 
     const plat = url.pathname === "/latest/ios" ? "ios"
                : url.pathname === "/latest/android" ? "android" : null;
+
+    /* 更新日志接口：读后台 changelog.json 返回日志列表（后台"更新日志"栏目维护） */
+    if (url.pathname === "/latest/changelog") {
+      try {
+        const r = await fetch(UPSTREAM_LOG);
+        let logs = [];
+        try {
+          const j = await r.json();
+          logs = (j && Array.isArray(j.list)) ? j.list : [];
+        } catch (e) {}
+        return new Response(JSON.stringify({ logs: logs }), {
+          headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ logs: [] }), {
+          status: 502,
+          headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
+        });
+      }
+    }
+
     if (!plat) {
       return new Response("not found", { status: 404, headers: cors });
     }
