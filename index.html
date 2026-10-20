@@ -832,14 +832,15 @@ body{padding-bottom:0}
     cell.appendChild(tag);
   });
   (function initLogs(){
-    /* 更新日志：每个下载横幅注入折叠区块，数据由 autoFetch 填充 */
+    /* 更新日志：每个下载横幅注入折叠区块，外层默认收起，点标题展开；
+       展开后最新一条默认展开、其余折叠 */
     document.querySelectorAll(".dl-banner").forEach(function(b){
       var wrap = document.createElement("div");
-      wrap.className = "log-wrap open";
+      wrap.className = "log-wrap";
       if (b.id) wrap.id = b.id.replace("-download", "-log");
       wrap.innerHTML =
-        '<button type="button" class="log-toggle" aria-expanded="true"><span class="lg-t">更新日志</span><span class="lg-arrow">⌄</span></button>' +
-        '<div class="log-panel">' +
+        '<button type="button" class="log-toggle" aria-expanded="false"><span class="lg-t">更新日志</span><span class="lg-arrow">⌄</span></button>' +
+        '<div class="log-panel" hidden>' +
           '<div class="log-group"><p class="log-loading">加载中…</p></div>' +
         '</div>';
       b.appendChild(wrap);
@@ -901,7 +902,7 @@ body{padding-bottom:0}
           .catch(function(){ legacy(key, cur); });
       }catch(e){ legacy(key, cur); }
     }
-    /* 更新日志：读后台日志列表（/latest/changelog），默认全部折叠，点击展开 */
+    /* 更新日志：读后台日志列表（/latest/changelog），外层点开显示，最新一条默认展开、其余折叠 */
     function loadChangelog(){
       try{
         fetch("https://img.yjtv.top/latest/changelog", {method:"GET", mode:"cors", cache:"no-store"})
@@ -921,7 +922,7 @@ body{padding-bottom:0}
                 var date = item.date || "—";
                 var content = item.content || "";
                 var it = document.createElement("div");
-                it.className = "log-item";
+                it.className = "log-item" + (i === 0 ? " open" : "");
                 it.innerHTML =
                   '<button type="button" class="log-item-head"><b class="lg-ver">更新于 ' + date + '</b>' +
                   '<span class="lg-arrow">⌄</span></button>' +
