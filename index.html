@@ -934,7 +934,15 @@ body{padding-bottom:0}
               });
             });
           })
-          .catch(function(){});
+          .catch(function(){
+            document.querySelectorAll(".log-group").forEach(function(group){
+              group.innerHTML = "";
+              var p = document.createElement("p");
+              p.className = "log-loading";
+              p.textContent = "暂无更新日志";
+              group.appendChild(p);
+            });
+          });
       }catch(e){}
     }
     loadLatest("ios", "ios", DL_IOS);
