@@ -110,22 +110,25 @@ body{padding-bottom:0}
 .dl-cell{display:flex;flex-direction:column;align-items:center}
 .dl-cell .update-tag{margin-top:10px}
 .dl-banner .dl-cell .update-tag{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.08)}
-.log-wrap{margin:22px auto 0;max-width:560px;text-align:left}
+.log-wrap{margin:26px auto 0;max-width:600px;text-align:left;
+  border:1px solid var(--line);border-radius:22px;overflow:hidden;
+  background:rgba(0,0,0,.035);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .log-toggle{
-  display:inline-flex;align-items:center;gap:8px;padding:8px 16px;
-  border-radius:999px;font-size:12.5px;font-weight:600;letter-spacing:.06em;
-  color:var(--ink);background:transparent;border:1px solid var(--line);
-  cursor:pointer;transition:.25s;font-family:inherit;
+  display:flex;align-items:center;gap:10px;width:100%;padding:16px 20px;
+  font-size:15px;font-weight:800;letter-spacing:.08em;color:var(--ink);
+  background:transparent;border:0;cursor:pointer;transition:.25s;font-family:inherit;
 }
-.log-toggle:hover{border-color:currentColor;opacity:.85}
-.log-toggle .lg-arrow{transition:transform .25s;font-size:11px;opacity:.7}
+.log-toggle:hover{opacity:.85}
+.log-toggle .lg-t{display:inline-flex;align-items:center;gap:8px}
+.log-toggle .lg-t::before{content:"";width:8px;height:8px;border-radius:50%;
+  background:var(--accent,#e4b15f);flex:none;animation:pulse 2.4s ease-in-out infinite}
+.log-toggle .lg-arrow{margin-left:auto;transition:transform .25s;font-size:12px;opacity:.65}
 .log-wrap.open .log-toggle .lg-arrow{transform:rotate(180deg)}
-.log-panel{margin-top:14px;border:1px solid var(--line);border-radius:18px;
-  padding:4px 0;overflow:hidden;background:rgba(0,0,0,.035)}
-.log-row{padding:13px 18px}
+.log-panel{padding:2px 20px 18px}
+.log-row{padding:12px 0}
 .log-row + .log-row{border-top:1px dashed var(--line)}
 .log-head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
-.log-head b{font-size:13.5px;color:var(--ink);font-family:'Outfit','Noto Sans SC',sans-serif}
+.log-head b{font-size:14px;color:var(--ink);font-family:'Outfit','Noto Sans SC',sans-serif}
 .log-head span{font-size:11px;opacity:.55;letter-spacing:.03em}
 .log-content{margin:7px 0 0;font-size:12.5px;line-height:1.65;opacity:.8;white-space:pre-line}
 .trust span{display:inline-flex;align-items:center;gap:7px}
@@ -822,10 +825,10 @@ body{padding-bottom:0}
     /* 更新日志：每个下载横幅注入折叠区块，数据由 autoFetch 填充 */
     document.querySelectorAll(".dl-banner").forEach(function(b){
       var wrap = document.createElement("div");
-      wrap.className = "log-wrap";
+      wrap.className = "log-wrap open";
       wrap.innerHTML =
-        '<button type="button" class="log-toggle" aria-expanded="false"><span class="lg-t">更新日志</span><span class="lg-arrow">⌄</span></button>' +
-        '<div class="log-panel" hidden>' +
+        '<button type="button" class="log-toggle" aria-expanded="true"><span class="lg-t">更新日志</span><span class="lg-arrow">⌄</span></button>' +
+        '<div class="log-panel">' +
           '<div class="log-row" data-key="ios">' +
             '<div class="log-head"><b class="lg-ver">iOS</b><span class="lg-time"></span></div>' +
             '<p class="log-content">加载中…</p>' +
