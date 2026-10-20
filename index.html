@@ -125,11 +125,21 @@ body{padding-bottom:0}
 .log-toggle .lg-arrow{margin-left:auto;transition:transform .25s;font-size:12px;opacity:.65}
 .log-wrap.open .log-toggle .lg-arrow{transform:rotate(180deg)}
 .log-panel{padding:2px 20px 18px}
-.log-row{padding:12px 0}
-.log-row + .log-row{border-top:1px dashed var(--line)}
-.log-head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
-.log-head b{font-size:14px;color:var(--ink);font-family:'Outfit','Noto Sans SC',sans-serif}
-.log-head span{font-size:11px;opacity:.55;letter-spacing:.03em}
+.log-group{display:flex;flex-direction:column}
+.log-group + .log-group{border-top:1px dashed var(--line);margin-top:6px;padding-top:6px}
+.log-loading{padding:14px 0;font-size:12.5px;opacity:.55}
+.log-item{border-bottom:1px dashed var(--line)}
+.log-item:last-child{border-bottom:0}
+.log-item-head{
+  display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;width:100%;
+  padding:14px 0 4px;background:none;border:0;cursor:pointer;font-family:inherit;text-align:left;
+}
+.log-item-head .lg-arrow{margin-left:auto;transition:transform .25s;font-size:12px;opacity:.6;align-self:center}
+.log-item.open .log-item-head .lg-arrow{transform:rotate(180deg)}
+.log-item-head b{font-size:14px;color:var(--ink);font-family:'Outfit','Noto Sans SC',sans-serif}
+.log-item-head span{font-size:11px;opacity:.55;letter-spacing:.03em}
+.log-item-body{display:none}
+.log-item.open .log-item-body{display:block;padding:2px 0 14px}
 .log-content{margin:7px 0 0;font-size:12.5px;line-height:1.65;opacity:.8;white-space:pre-line}
 .trust span{display:inline-flex;align-items:center;gap:7px}
 .trust .ic{width:14px;height:14px}
@@ -464,7 +474,7 @@ body{padding-bottom:0}
       <a class="brand" href="#site-v1"><span class="brand-mark">L</span>LwLive</a>
       <nav class="nav-links" aria-label="主导航">
         <a href="#site-v1">首页</a>
-        <a href="#v1-download">下载</a>
+        <a href="#v1-log">更新日志</a>
         <a class="nav-cta" href="#v1-download"><svg class="ic"><use href="#i-download"/></svg>立即下载</a>
       </nav>
       <button class="nav-toggle" aria-label="打开菜单" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
@@ -561,7 +571,7 @@ body{padding-bottom:0}
       <a class="brand" href="#site-v2"><span class="brand-mark">L</span>LwLive</a>
       <nav class="nav-links" aria-label="主导航">
         <a href="#site-v2">首页</a>
-        <a href="#v2-download">下载</a>
+        <a href="#v2-log">更新日志</a>
         <a class="nav-cta" href="#v2-download"><svg class="ic"><use href="#i-download"/></svg>立即下载</a>
       </nav>
       <button class="nav-toggle" aria-label="打开菜单" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
@@ -657,7 +667,7 @@ body{padding-bottom:0}
       <a class="brand" href="#site-v3"><span class="brand-mark">L</span>LwLive</a>
       <nav class="nav-links" aria-label="主导航">
         <a href="#site-v3">首页</a>
-        <a href="#v3-download">下载</a>
+        <a href="#v3-log">更新日志</a>
         <a class="nav-cta" href="#v3-download"><svg class="ic"><use href="#i-download"/></svg>立即下载</a>
       </nav>
       <button class="nav-toggle" aria-label="打开菜单" aria-expanded="false"><svg class="ic"><use href="#i-menu"/></svg></button>
@@ -826,17 +836,12 @@ body{padding-bottom:0}
     document.querySelectorAll(".dl-banner").forEach(function(b){
       var wrap = document.createElement("div");
       wrap.className = "log-wrap open";
+      if (b.id) wrap.id = b.id.replace("-download", "-log");
       wrap.innerHTML =
         '<button type="button" class="log-toggle" aria-expanded="true"><span class="lg-t">更新日志</span><span class="lg-arrow">⌄</span></button>' +
         '<div class="log-panel">' +
-          '<div class="log-row" data-key="ios">' +
-            '<div class="log-head"><b class="lg-ver">iOS</b><span class="lg-time"></span></div>' +
-            '<p class="log-content">加载中…</p>' +
-          '</div>' +
-          '<div class="log-row" data-key="android">' +
-            '<div class="log-head"><b class="lg-ver">Android</b><span class="lg-time"></span></div>' +
-            '<p class="log-content">加载中…</p>' +
-          '</div>' +
+          '<div class="log-group" data-key="ios"><p class="log-loading">加载中…</p></div>' +
+          '<div class="log-group" data-key="android"><p class="log-loading">加载中…</p></div>' +
         '</div>';
       b.appendChild(wrap);
       wrap.querySelector(".log-toggle").addEventListener("click", function(){
@@ -893,21 +898,31 @@ body{padding-bottom:0}
             }
             if (o && o.ts && o.ts > 0) applyTime(key, o.ts);
             else legacy(key, cur);
-            /* 填充更新日志 */
+            /* 填充更新日志：多版本列表，最新一条默认展开，其余折叠 */
             if (o){
-              var ver = o.version || "";
-              var content = o.content || "";
-              var ts = o.ts || 0;
-              document.querySelectorAll(".log-row[data-key=\"" + key + "\"]").forEach(function(row){
-                var v = row.querySelector(".lg-ver");
-                var t = row.querySelector(".lg-time");
-                var c = row.querySelector(".log-content");
-                if (v && ver) v.textContent = (key === "ios" ? "iOS" : "Android") + " · " + (ver.charAt(0).toLowerCase() === "v" ? ver : "v" + ver);
-                if (t && ts > 0) t.textContent = "更新于 " + fmtDate(ts);
-                if (c){
-                  if (content) c.textContent = content;
-                  else c.textContent = "暂无更新说明";
-                }
+              var logs = (o.logs && o.logs.length) ? o.logs
+                       : [{ version: o.version || "", ts: o.ts || 0, content: o.content || "" }];
+              var platName = (key === "ios" ? "iOS" : "Android");
+              document.querySelectorAll(".log-group[data-key=\"" + key + "\"]").forEach(function(group){
+                group.innerHTML = "";
+                logs.forEach(function(item, i){
+                  var ver = item.version || "";
+                  var label = platName + " · " + (ver.charAt(0).toLowerCase() === "v" ? ver : "v" + ver);
+                  var ts = item.ts || 0;
+                  var content = item.content || "暂无更新说明";
+                  var it = document.createElement("div");
+                  it.className = "log-item" + (i === 0 ? " open" : "");
+                  it.innerHTML =
+                    '<button type="button" class="log-item-head"><b class="lg-ver">' + label + '</b>' +
+                    (ts > 0 ? '<span class="lg-time">更新于 ' + fmtDate(ts) + '</span>' : '') +
+                    '<span class="lg-arrow">⌄</span></button>' +
+                    '<div class="log-item-body"><p class="log-content"></p></div>';
+                  it.querySelector(".log-content").textContent = content;
+                  it.querySelector(".log-item-head").addEventListener("click", function(){
+                    it.classList.toggle("open");
+                  });
+                  group.appendChild(it);
+                });
               });
             }
           })

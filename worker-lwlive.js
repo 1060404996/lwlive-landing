@@ -54,12 +54,14 @@ export default {
 
       const version = (cfg[plat] && cfg[plat].latestVersion) || "";
       const content = (cfg[plat] && cfg[plat].updateContent) || "";
-      const body = JSON.stringify({ url: dl, ts: ts, version: version, content: content });
+      const changelog = (cfg[plat] && cfg[plat].changelog) || [];
+      const logs = changelog.length ? changelog : [{ version: version, ts: ts, content: content }];
+      const body = JSON.stringify({ url: dl, ts: ts, version: version, content: content, logs: logs });
       return new Response(body, {
         headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
       });
     } catch (e) {
-      return new Response(JSON.stringify({ url: "", ts: 0, version: "", content: "" }), {
+      return new Response(JSON.stringify({ url: "", ts: 0, version: "", content: "", logs: [] }), {
         status: 502,
         headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
       });
