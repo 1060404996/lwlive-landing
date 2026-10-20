@@ -901,7 +901,7 @@ body{padding-bottom:0}
           .catch(function(){ legacy(key, cur); });
       }catch(e){ legacy(key, cur); }
     }
-    /* 更新日志：读后台日志列表（/latest/changelog），最新一条默认展开，其余折叠 */
+    /* 更新日志：读后台日志列表（/latest/changelog），默认全部折叠，点击展开 */
     function loadChangelog(){
       try{
         fetch("https://img.yjtv.top/latest/changelog", {method:"GET", mode:"cors", cache:"no-store"})
@@ -921,7 +921,7 @@ body{padding-bottom:0}
                 var date = item.date || "—";
                 var content = item.content || "";
                 var it = document.createElement("div");
-                it.className = "log-item" + (i === 0 ? " open" : "");
+                it.className = "log-item";
                 it.innerHTML =
                   '<button type="button" class="log-item-head"><b class="lg-ver">更新于 ' + date + '</b>' +
                   '<span class="lg-arrow">⌄</span></button>' +
