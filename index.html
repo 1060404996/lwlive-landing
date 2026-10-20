@@ -899,7 +899,7 @@ body{padding-bottom:0}
                 var v = row.querySelector(".lg-ver");
                 var t = row.querySelector(".lg-time");
                 var c = row.querySelector(".log-content");
-                if (v && ver) v.textContent = (key === "ios" ? "iOS" : "Android") + " · v" + ver;
+                if (v && ver) v.textContent = (key === "ios" ? "iOS" : "Android") + " · " + (ver.charAt(0).toLowerCase() === "v" ? ver : "v" + ver);
                 if (t && ts > 0) t.textContent = "更新于 " + fmtDate(ts);
                 if (c){
                   if (content) c.textContent = content;
