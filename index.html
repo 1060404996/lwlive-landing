@@ -110,6 +110,24 @@ body{padding-bottom:0}
 .dl-cell{display:flex;flex-direction:column;align-items:center}
 .dl-cell .update-tag{margin-top:10px}
 .dl-banner .dl-cell .update-tag{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.08)}
+.log-wrap{margin:22px auto 0;max-width:560px;text-align:left}
+.log-toggle{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 16px;
+  border-radius:999px;font-size:12.5px;font-weight:600;letter-spacing:.06em;
+  color:var(--ink);background:transparent;border:1px solid var(--line);
+  cursor:pointer;transition:.25s;font-family:inherit;
+}
+.log-toggle:hover{border-color:currentColor;opacity:.85}
+.log-toggle .lg-arrow{transition:transform .25s;font-size:11px;opacity:.7}
+.log-wrap.open .log-toggle .lg-arrow{transform:rotate(180deg)}
+.log-panel{margin-top:14px;border:1px solid var(--line);border-radius:18px;
+  padding:4px 0;overflow:hidden;background:rgba(0,0,0,.035)}
+.log-row{padding:13px 18px}
+.log-row + .log-row{border-top:1px dashed var(--line)}
+.log-head{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.log-head b{font-size:13.5px;color:var(--ink);font-family:'Outfit','Noto Sans SC',sans-serif}
+.log-head span{font-size:11px;opacity:.55;letter-spacing:.03em}
+.log-content{margin:7px 0 0;font-size:12.5px;line-height:1.65;opacity:.8;white-space:pre-line}
 .trust span{display:inline-flex;align-items:center;gap:7px}
 .trust .ic{width:14px;height:14px}
 
@@ -800,6 +818,31 @@ body{padding-bottom:0}
     tag.innerHTML = '<span class="up-dot"></span>更新于 <b>' + UPDATED + '</b>';
     cell.appendChild(tag);
   });
+  (function initLogs(){
+    /* 更新日志：每个下载横幅注入折叠区块，数据由 autoFetch 填充 */
+    document.querySelectorAll(".dl-banner").forEach(function(b){
+      var wrap = document.createElement("div");
+      wrap.className = "log-wrap";
+      wrap.innerHTML =
+        '<button type="button" class="log-toggle" aria-expanded="false"><span class="lg-t">更新日志</span><span class="lg-arrow">⌄</span></button>' +
+        '<div class="log-panel" hidden>' +
+          '<div class="log-row" data-key="ios">' +
+            '<div class="log-head"><b class="lg-ver">iOS</b><span class="lg-time"></span></div>' +
+            '<p class="log-content">加载中…</p>' +
+          '</div>' +
+          '<div class="log-row" data-key="android">' +
+            '<div class="log-head"><b class="lg-ver">Android</b><span class="lg-time"></span></div>' +
+            '<p class="log-content">加载中…</p>' +
+          '</div>' +
+        '</div>';
+      b.appendChild(wrap);
+      wrap.querySelector(".log-toggle").addEventListener("click", function(){
+        var open = wrap.classList.toggle("open");
+        wrap.querySelector(".log-panel").hidden = !open;
+        this.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    });
+  })();
   (function autoFetch(){
     /* 通过 img.yjtv.top 的 Worker 中转读取后台配置（配置文件地址不出现）：
        /latest/ios、/latest/android → { url, ts, version }
@@ -847,6 +890,23 @@ body{padding-bottom:0}
             }
             if (o && o.ts && o.ts > 0) applyTime(key, o.ts);
             else legacy(key, cur);
+            /* 填充更新日志 */
+            if (o){
+              var ver = o.version || "";
+              var content = o.content || "";
+              var ts = o.ts || 0;
+              document.querySelectorAll(".log-row[data-key=\"" + key + "\"]").forEach(function(row){
+                var v = row.querySelector(".lg-ver");
+                var t = row.querySelector(".lg-time");
+                var c = row.querySelector(".log-content");
+                if (v && ver) v.textContent = (key === "ios" ? "iOS" : "Android") + " · v" + ver;
+                if (t && ts > 0) t.textContent = "更新于 " + fmtDate(ts);
+                if (c){
+                  if (content) c.textContent = content;
+                  else c.textContent = "暂无更新说明";
+                }
+              });
+            }
           })
           .catch(function(){ legacy(key, cur); });
       }catch(e){ legacy(key, cur); }
