@@ -1,4 +1,5 @@
 _backup/
 *.png
-*.jpg
 *.jpeg
+!images/
+!images/*.jpg
