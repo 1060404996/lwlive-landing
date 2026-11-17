@@ -1,12 +1,13 @@
-/* LwLive 落地页中转 Worker
+/* LwLive 落地页中转 Worker（v2 · MySQL 新后台）
    - 挂在 img.yjtv.top/latest/* 路由
-   - 落地页只请求 img.yjtv.top，后台地址 api.yjtv.top 写死在此文件中，前台不可见
-   - /latest/ios  → 返回 { url, ts, version }（ts 为文件真实上传时间戳）
-   - /latest/android → 同上
-   - 数据源：后台 config.json（iOS/安卓 downloadUrl + 最新版本）
+   - 数据源：新后台 api.9933333.xyz/config.php（配置存在 MySQL 里），后台地址写死在此文件，前台不可见
+   - /latest/ios       → { url, ts, version, content, logs }
+   - /latest/android   → 同上
+   - /latest/changelog → { logs:[{version, ts, content}] }
+   新接口返回形如：{ code:0, data:{ ios:{downloadUrl,latestVersion,updateContent}, android:{...} } }
+   旧版为扁平结构（ios/android 直接在顶层），此处两者都兼容。
 */
-const UPSTREAM = "https://api.yjtv.top/data/config.json";
-const UPSTREAM_LOG = "https://api.yjtv.top/data/changelog.json";
+const UPSTREAM = "https://api.9933333.xyz/config.php";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,40 @@ const cors = {
   "Access-Control-Allow-Headers": "*",
   "Cache-Control": "no-store"
 };
+
+function jsonResp(obj, status) {
+  return new Response(JSON.stringify(obj), {
+    status: status || 200,
+    headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
+  });
+}
+
+/* 从配置里取出某个平台的信息：兼容 {data:{ios:{...}}} 与 {ios:{...}} */
+function pickPlatform(root, plat) {
+  if (!root) return { url: "", version: "", content: "" };
+  const obj = root[plat] || {};
+  return {
+    url: obj.downloadUrl || "",
+    version: obj.latestVersion || "",
+    content: obj.updateContent || ""
+  };
+}
+
+/* 用响应头拿文件真实上传时间；失败则回落到配置本身的时间 */
+async function fileTime(url) {
+  if (!url) return 0;
+  try {
+    const h = await fetch(url, { method: "HEAD", redirect: "follow" });
+    const lm = h.headers.get("last-modified");
+    if (lm) { const t = Date.parse(lm); if (!isNaN(t)) return t; }
+    const et = h.headers.get("etag");
+    if (et) {
+      const m = et.match(/(\d{13})/);
+      if (m) return parseInt(m[1], 10);
+    }
+  } catch (e) {}
+  return 0;
+}
 
 export default {
   async fetch(request) {
@@ -25,68 +60,44 @@ export default {
 
     const plat = url.pathname === "/latest/ios" ? "ios"
                : url.pathname === "/latest/android" ? "android" : null;
+    const isLog = url.pathname === "/latest/changelog";
 
-    /* 更新日志接口：读后台 changelog.json 返回日志列表（后台"更新日志"栏目维护） */
-    if (url.pathname === "/latest/changelog") {
-      try {
-        const r = await fetch(UPSTREAM_LOG);
-        let logs = [];
-        try {
-          const j = await r.json();
-          logs = (j && Array.isArray(j.list)) ? j.list : [];
-        } catch (e) {}
-        return new Response(JSON.stringify({ logs: logs }), {
-          headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ logs: [] }), {
-          status: 502,
-          headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
-        });
-      }
-    }
-
-    if (!plat) {
+    if (!plat && !isLog) {
       return new Response("not found", { status: 404, headers: cors });
     }
 
     try {
-      const cfgResp = await fetch(UPSTREAM);
+      const r = await fetch(UPSTREAM, { headers: { "Accept": "application/json" } });
       let cfgTs = 0;
-      const cfgLm = cfgResp.headers.get("last-modified");
-      if (cfgLm) { const t = Date.parse(cfgLm); if (!isNaN(t)) cfgTs = t; }
-      const cfg = await cfgResp.json();
+      const lm = r.headers.get("last-modified");
+      if (lm) { const t = Date.parse(lm); if (!isNaN(t)) cfgTs = t; }
 
-      const dl = (cfg[plat] && cfg[plat].downloadUrl) || "";
+      const raw = await r.json();
+      const root = (raw && raw.data) ? raw.data : raw;
 
-      // 读下载文件响应头拿真实上传时间（服务端无跨域限制，安卓 etag 也能读）
-      let ts = 0;
-      if (dl) {
-        try {
-          const h = await fetch(dl, { method: "HEAD", redirect: "follow" });
-          const lm = h.headers.get("last-modified");
-          if (lm) { const t = Date.parse(lm); if (!isNaN(t)) ts = t; }
-          if (!ts) {
-            const et = h.headers.get("etag");
-            if (et) { const m = et.match(/(\d{13})/); if (m) ts = parseInt(m[1], 10); }
-          }
-        } catch (e) {}
+      /* 更新日志：新后台没有独立日志接口，用 iOS 更新公告作为一条记录 */
+      if (isLog) {
+        const info = pickPlatform(root, "ios");
+        const logs = [];
+        if (info.content || info.version) {
+          logs.push({ version: info.version, ts: cfgTs || 0, content: info.content });
+        }
+        return jsonResp({ logs: logs });
       }
-      if (!ts) ts = cfgTs; // 兜底：后台配置保存时间
 
-      const version = (cfg[plat] && cfg[plat].latestVersion) || "";
-      const content = (cfg[plat] && cfg[plat].updateContent) || "";
-      const changelog = (cfg[plat] && cfg[plat].changelog) || [];
-      const logs = changelog.length ? changelog : [{ version: version, ts: ts, content: content }];
-      const body = JSON.stringify({ url: dl, ts: ts, version: version, content: content, logs: logs });
-      return new Response(body, {
-        headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
+      const info = pickPlatform(root, plat);
+      let ts = await fileTime(info.url);
+      if (!ts) ts = cfgTs;
+
+      return jsonResp({
+        url: info.url,
+        ts: ts,
+        version: info.version,
+        content: info.content,
+        logs: info.content ? [{ version: info.version, ts: ts, content: info.content }] : []
       });
     } catch (e) {
-      return new Response(JSON.stringify({ url: "", ts: 0, version: "", content: "", logs: [] }), {
-        status: 502,
-        headers: { ...cors, "Content-Type": "application/json; charset=utf-8" }
-      });
+      return jsonResp({ url: "", ts: 0, version: "", content: "", logs: [] }, 502);
     }
   }
 };
